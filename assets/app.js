@@ -59,6 +59,13 @@
     <section id="location" class="section wrap"><div class="two-column location-layout"><div><p class="eyebrow">LOCATION</p><h2>通いやすい地域を、<br>お聞かせください。</h2><p class="section-intro">初期の施術場所は、伊丹市内を軸に調整しています。他の地域のご希望も、今後の開催を検討するために伺います。</p><a class="text-link" href="#register" data-intent="inquiry">施術場所について問い合わせる</a></div><div class="location-card">${badge(C.venue.status)}<h3>${escape(C.venue.text)}</h3><p class="venue-date">${escape(C.venue.date)}</p><p class="small muted">医療機関名・住所・担当医・開催日は、契約と調整が整った後にご案内します。</p></div></div><div class="region-picker"><p>希望する地域を選んで、登録フォームへ</p><div>${C.regions.map((r) => `<a class="region-option" href="#register" data-region="${escape(r.id)}"><strong>${escape(r.name)}</strong><small>${escape(r.status)}</small><span aria-hidden="true">↗</span></a>`).join("")}</div></div><details class="service-plan"><summary>地域連携の運営構想を見る <span>ご説明用</span></summary><div><p>希望登録を地域ごとに集約し、医師・医療機関と開催日を調整するサービスへの発展を想定しています。</p><ol><li><b>希望登録・地域</b><span>地域ごとの希望状況を把握</span></li><li><b>医師・医療機関</b><span>担当可能な医師と会場を調整</span></li><li><b>開催日・予約</b><span>条件の確定後、個別にご案内</span></li><li><b>症例・経過</b><span>同意と確認のもと継続して記録</span></li></ol><p class="small muted">本デモに管理機能・実際の登録情報の蓄積はありません。開催人数の基準、地域の拡大、運営体制は検討中です。</p></div></details></section>`;
 
   function renderCases() {
+    const validObservation = (o) =>
+      /^(assets\/cases\/)[a-zA-Z0-9_./-]+\.(webp|png|jpe?g)$/.test(o.image) &&
+      !o.image.includes("..") && o.alt && o.label;
+    const brochure = C.brochureGallery;
+    const brochureRecords = brochure?.enabled && brochure.publicationAuthorized
+      ? brochure.records.filter((record) => record.observations?.length >= 2 && record.observations.every(validObservation))
+      : [];
     const approved = C.cases.filter(
       (c) =>
         c.status === "approved" &&
@@ -69,23 +76,19 @@
         c.totalCost &&
         c.risks &&
         c.observations?.length &&
-        c.observations.every(
-          (o) =>
-            /^(assets\/cases\/)[a-zA-Z0-9_./-]+\.(webp|png|jpe?g)$/.test(
-              o.image,
-            ) &&
-            !o.image.includes("..") &&
-            o.alt &&
-            o.label,
-        ),
+        c.observations.every(validObservation),
     );
     const gallery = document.getElementById("case-gallery");
-    document.getElementById("cases-empty-note").hidden = approved.length > 0;
-    if (!approved.length) {
+    document.getElementById("cases-empty-note").hidden = approved.length > 0 || brochureRecords.length > 0;
+    if (brochureRecords.length) {
+      document.querySelector("#cases .section-intro").textContent = brochure.intro;
+    }
+    if (!approved.length && !brochureRecords.length) {
       gallery.innerHTML = `<div class="case-placeholder case-editorial"><div class="case-placeholder-heading"><span class="eyebrow">PHOTOGRAPHIC RECORD</span><h3>症例写真掲載予定</h3><p>同じ条件の写真で、変化を記録する。</p></div><div class="planned-photo-pair" aria-label="症例写真掲載予定の空枠"><div><span>BEFORE</span><b>施術前</b><small>写真掲載予定</small></div><div><span>FOLLOW-UP</span><b>施術後の経過</b><small>写真掲載予定</small></div></div><div class="case-timeline"><span>撮影条件を統一</span><i aria-hidden="true"></i><span>経過を記録</span><i aria-hidden="true"></i><span>継続して掲載</span></div><small>掲載許可・内容の確認後、経過写真を順次追加します。</small></div>`;
       return;
     }
-    gallery.innerHTML = approved
+    const brochureHTML = brochureRecords.length ? `<div class="brochure-gallery">${brochureRecords.map((record) => `<article class="brochure-record"><h3>${escape(record.title)}</h3><div class="brochure-photo-pair">${record.observations.map((o, i) => `<figure><figcaption><span aria-hidden="true">${i === 0 ? "BEFORE" : "FOLLOW-UP"}</span><b>${escape(o.label)}</b></figcaption><div class="brochure-photo-frame">${sourceImage(o)}</div></figure>`).join("")}</div></article>`).join("")}</div><div class="brochure-caption"><p class="brochure-source">出典：${escape(brochure.source)}</p><p>${escape(brochure.note)}</p><p class="small muted">${escape(brochure.details)}</p><div class="brochure-related"><a class="text-link" href="#price">現在の仮料金を見る</a><a class="text-link" href="#risks">リスク・副作用を見る</a></div></div>` : "";
+    gallery.innerHTML = brochureHTML + approved
       .map(
         (c) =>
           `<article class="case-record"><h3>${escape(c.title || "治療経過")}</h3><div class="case-photos">${c.observations.map((o) => `<figure><img src="${escape(o.image)}" alt="${escape(o.alt)}" loading="lazy" width="600" height="600"><figcaption>${escape(o.label)}</figcaption></figure>`).join("")}</div><dl><dt>治療内容・回数</dt><dd>${escape(c.treatment)}</dd><dt>費用総額</dt><dd>${escape(c.totalCost)}</dd><dt>主なリスク・副作用</dt><dd>${escape(c.risks)}</dd></dl><p class="small">治療結果には個人差があり、同様の結果を保証するものではありません。</p></article>`,
