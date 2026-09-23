@@ -2,6 +2,7 @@
 
 - [比較写真6組を掲載した最新版デモ](https://bestawebdata.github.io/hair-graft-demo-20260923/?v=cases-1#cases)
 - [GitHubリポジトリ](https://github.com/bestawebdata/hair-graft-demo-20260923)
+- [LINE画面の操作デモ](https://bestawebdata.github.io/hair-graft-demo-20260923/line/)
 - ソースブランチ：`codex/hair-graft-demo`
 - 公開ブランチ：`gh-pages`（`dist/` の内容だけを公開）
 

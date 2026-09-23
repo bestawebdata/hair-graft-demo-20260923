@@ -9,7 +9,7 @@ const check = (ok, message) => {
   if (!ok) throw new Error(message);
   console.log("OK " + message);
 };
-for (const file of ["app.js", "content.js"])
+for (const file of ["app.js", "content.js", "line-demo.js"])
   execFileSync(process.execPath, [
     "--check",
     path.join(root, "dist/assets", file),
@@ -63,3 +63,8 @@ for (const photo of [c.treatmentVisuals.equipment, c.treatmentVisuals.cartridge,
     `出典付き参考写真 ${photo.image}`,
   );
 console.log("Static checks passed. Browser layout must be checked separately.");
+const lineHtml = fs.readFileSync(path.join(root, "dist/line/index.html"), "utf8");
+check(lineHtml.includes("noindex,nofollow,noarchive"), "LINEデモの検索除外設定");
+check(html.includes('href="line/index.html"'), "治療LPからLINEデモへのリンク");
+for (const [, ref] of lineHtml.matchAll(/(?:src|href)="((?:\.\.\/assets\/)[^"#]+)"/g))
+  check(fs.existsSync(path.resolve(root, "dist/line", ref.split("?")[0])), `LINE参照ファイル ${ref}`);
