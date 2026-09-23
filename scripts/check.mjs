@@ -35,7 +35,13 @@ check(
   c.venue.text.includes("伊丹市内") && c.venue.date.includes("未定"),
   "仮の開催地・未定日程",
 );
-check(c.cases.length === 0, "症例データなし");
+check(c.cases.length === 0, "将来の経過記録に架空データなし");
+check(c.brochureGallery.enabled && c.brochureGallery.publicationAuthorized && c.brochureGallery.records.length === 6, "確認済みパンフレット写真6組を表示");
+for (const record of c.brochureGallery.records) {
+  check(record.observations.length === 2 && record.observations.map((o) => o.label).join("/") === "術前/4か月後", `${record.id} 原資料の左右対応と経過表記`);
+  for (const photo of record.observations)
+    check(photo.image.startsWith("assets/cases/") && fs.existsSync(path.join(root, "dist", photo.image)) && photo.alt && photo.width > 0 && photo.height > 0, `症例写真 ${photo.image}`);
+}
 const js = fs.readFileSync(path.join(root, "dist/assets/app.js"), "utf8");
 check(
   !/\b(fetch|XMLHttpRequest|sendBeacon|localStorage|sessionStorage)\b/.test(js),

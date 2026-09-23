@@ -134,7 +134,145 @@ window.SITE_CONTENT = {
     precautions:
       "重度の皮膚疾患、感染症、免疫不全、出血傾向のある方などは施術できない場合があります。妊娠中・授乳中は原則として施術不可とされています。適応は医師が判断します。",
   },
-  // 公開承認・同意・同一撮影条件を確認した症例だけを追加。現時点では空配列。
+  // 2026-09-23：医師監修パンフレットの写真使用についてユーザー確認済み。
+  // 撮影条件・施術回数等の未提示情報を確認済みに置き換えない。
+  brochureGallery: {
+    "enabled": true,
+    "publicationAuthorized": true,
+    "source": "治療説明パンフレット（10ページ資料）6ページ",
+    "intro": "医師監修のパンフレットに掲載された、治療前後の比較写真をご紹介します。",
+    "note": "「術前・4か月後」は原資料の表記です。治療結果には個人差があり、同様の結果を保証するものではありません。",
+    "details": "掲載写真ごとの施術回数・併用治療・当時の費用は確認中です。",
+    "records": [
+      {
+        "id": "brochure-01",
+        "title": "経過写真 01",
+        "sourcePosition": "原資料の左列・1段目",
+        "observations": [
+          {
+            "label": "術前",
+            "image": "assets/cases/brochure-01-before.webp",
+            "width": 223,
+            "height": 165,
+            "alt": "パンフレット掲載写真01・術前（原資料表記）"
+          },
+          {
+            "label": "4か月後",
+            "image": "assets/cases/brochure-01-after.webp",
+            "width": 228,
+            "height": 165,
+            "alt": "パンフレット掲載写真01・4か月後（原資料表記）"
+          }
+        ]
+      },
+      {
+        "id": "brochure-02",
+        "title": "経過写真 02",
+        "sourcePosition": "原資料の左列・2段目",
+        "observations": [
+          {
+            "label": "術前",
+            "image": "assets/cases/brochure-02-before.webp",
+            "width": 223,
+            "height": 168,
+            "alt": "パンフレット掲載写真02・術前（原資料表記）"
+          },
+          {
+            "label": "4か月後",
+            "image": "assets/cases/brochure-02-after.webp",
+            "width": 228,
+            "height": 168,
+            "alt": "パンフレット掲載写真02・4か月後（原資料表記）"
+          }
+        ]
+      },
+      {
+        "id": "brochure-03",
+        "title": "経過写真 03",
+        "sourcePosition": "原資料の左列・3段目",
+        "observations": [
+          {
+            "label": "術前",
+            "image": "assets/cases/brochure-03-before.webp",
+            "width": 223,
+            "height": 207,
+            "alt": "パンフレット掲載写真03・術前（原資料表記）"
+          },
+          {
+            "label": "4か月後",
+            "image": "assets/cases/brochure-03-after.webp",
+            "width": 228,
+            "height": 207,
+            "alt": "パンフレット掲載写真03・4か月後（原資料表記）"
+          }
+        ]
+      },
+      {
+        "id": "brochure-04",
+        "title": "経過写真 04",
+        "sourcePosition": "原資料の右列・1段目",
+        "observations": [
+          {
+            "label": "術前",
+            "image": "assets/cases/brochure-04-before.webp",
+            "width": 224,
+            "height": 182,
+            "alt": "パンフレット掲載写真04・術前（原資料表記）"
+          },
+          {
+            "label": "4か月後",
+            "image": "assets/cases/brochure-04-after.webp",
+            "width": 236,
+            "height": 182,
+            "alt": "パンフレット掲載写真04・4か月後（原資料表記）"
+          }
+        ]
+      },
+      {
+        "id": "brochure-05",
+        "title": "経過写真 05",
+        "sourcePosition": "原資料の右列・2段目",
+        "observations": [
+          {
+            "label": "術前",
+            "image": "assets/cases/brochure-05-before.webp",
+            "width": 230,
+            "height": 213,
+            "alt": "パンフレット掲載写真05・術前（原資料表記）"
+          },
+          {
+            "label": "4か月後",
+            "image": "assets/cases/brochure-05-after.webp",
+            "width": 229,
+            "height": 213,
+            "alt": "パンフレット掲載写真05・4か月後（原資料表記）"
+          }
+        ]
+      },
+      {
+        "id": "brochure-06",
+        "title": "経過写真 06",
+        "sourcePosition": "原資料の右列・3段目",
+        "observations": [
+          {
+            "label": "術前",
+            "image": "assets/cases/brochure-06-before.webp",
+            "width": 230,
+            "height": 142,
+            "alt": "パンフレット掲載写真06・術前（原資料表記）"
+          },
+          {
+            "label": "4か月後",
+            "image": "assets/cases/brochure-06-after.webp",
+            "width": 236,
+            "height": 142,
+            "alt": "パンフレット掲載写真06・4か月後（原資料表記）"
+          }
+        ]
+      }
+    ]
+  },
+  // 今後の経過記録。既存パンフレットの比較写真は上のbrochureGalleryで管理。
   // スキーマは docs/case-template.json と docs/DATA_MODEL.md を参照。
   cases: [],
 };
