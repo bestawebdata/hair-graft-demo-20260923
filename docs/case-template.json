@@ -1,0 +1,12 @@
+{
+  "id": "replace-with-anonymous-id",
+  "status": "draft",
+  "consentConfirmed": false,
+  "medicalReviewConfirmed": false,
+  "sameConditionsConfirmed": false,
+  "title": "症例の説明を確認後に入力",
+  "treatment": "",
+  "totalCost": "",
+  "risks": "",
+  "observations": []
+}
