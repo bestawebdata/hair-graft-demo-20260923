@@ -51,4 +51,9 @@ for (const photo of c.doctor.gallery)
     fs.existsSync(path.join(root, "dist", photo.image)),
     `医師画像 ${photo.image}`,
   );
+for (const photo of [c.treatmentVisuals.equipment, c.treatmentVisuals.cartridge, ...c.treatmentVisuals.procedurePhotos])
+  check(
+    fs.existsSync(path.join(root, "dist", photo.image)) && photo.alt && photo.source && photo.width > 0 && photo.height > 0,
+    `出典付き参考写真 ${photo.image}`,
+  );
 console.log("Static checks passed. Browser layout must be checked separately.");
