@@ -1924,3 +1924,356 @@ input[aria-invalid="true"] {
     overflow-wrap: anywhere;
   }
 }
+
+/* 原資料の人物写真を使った改訂版 */
+.hero {
+  grid-template-columns: 1.08fr 0.92fr;
+  min-height: 650px;
+  background: #f2f4f5;
+}
+.hero-copy {
+  padding-top: 72px;
+  padding-bottom: 72px;
+}
+.hero-portrait {
+  background: #e7e8eb;
+  min-height: 650px;
+}
+.hero-portrait > img {
+  object-position: 50% 38%;
+  object-fit: cover;
+}
+.hero-portrait:after {
+  background: linear-gradient(90deg, #f2f4f5 0%, rgba(242, 244, 245, 0) 18%);
+}
+.portrait-overline {
+  position: absolute;
+  top: 30px;
+  right: 33px;
+  z-index: 2;
+  color: #41505a;
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  writing-mode: vertical-rl;
+}
+.hero-doctor-card {
+  position: absolute;
+  bottom: 44px;
+  left: 42px;
+  right: 40px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 23px 27px;
+  background: rgba(255, 255, 255, 0.94);
+  border-left: 3px solid var(--gold);
+  box-shadow: 0 12px 40px #16344013;
+  transition: background 0.2s;
+}
+.hero-doctor-card:hover {
+  background: white;
+}
+.hero-doctor-card small {
+  display: block;
+  font-size: 0.75rem;
+  letter-spacing: 0.13em;
+  margin-bottom: 5px;
+  color: var(--muted);
+}
+.hero-doctor-card strong {
+  display: block;
+  font-family: var(--serif);
+  font-size: 1.7rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  line-height: 1.7;
+}
+.hero-doctor-card em {
+  font-family: var(--sans);
+  font-style: normal;
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+  margin-left: 9px;
+  white-space: nowrap;
+}
+.doctor-card-en {
+  font:
+    0.85rem Georgia,
+    serif;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}
+.portrait-link {
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border: 1px solid #b9c8cc;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 1.2rem;
+}
+.portrait-source {
+  position: absolute;
+  bottom: 16px;
+  right: 40px;
+  font-size: 0.7rem;
+  z-index: 3;
+  color: #fff;
+  text-shadow: 0 1px 6px #000;
+}
+.doctor-gallery {
+  display: grid;
+  grid-template-columns: 0.8fr 1.2fr;
+  gap: 25px;
+  margin-top: 30px;
+}
+.doctor-photo {
+  margin: 0;
+  min-width: 0;
+}
+.doctor-photo-frame {
+  height: 330px;
+  overflow: hidden;
+  background: #e8edef;
+}
+.doctor-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.doctor-photo.clinical img {
+  object-position: 50% 36%;
+}
+.doctor-photo.academic img {
+  object-position: 35% 50%;
+}
+.doctor-photo figcaption {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  align-items: baseline;
+  padding: 17px 0;
+  border-bottom: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+.doctor-photo figcaption > span {
+  font-family: var(--serif);
+  font-size: 1.05rem;
+}
+.doctor-photo figcaption > p {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.doctor-gallery-note {
+  font-size: 0.8rem;
+  line-height: 1.9;
+  color: var(--muted);
+  margin-top: 20px;
+}
+.case-editorial {
+  padding: 38px 45px;
+  text-align: left;
+  background: white;
+  border-top: 2px solid var(--gold);
+}
+.case-placeholder-heading .eyebrow {
+  font-size: 0.7rem;
+  margin-bottom: 9px;
+}
+.case-placeholder-heading > h3 {
+  font-family: var(--serif);
+  font-size: 1.55rem;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+}
+.case-placeholder-heading > p {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+.planned-photo-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 23px;
+  margin-top: 26px;
+}
+.planned-photo-pair > div {
+  min-height: 190px;
+  border: 1px solid #d5dfe2;
+  background: repeating-linear-gradient(
+    135deg,
+    #f3f6f7,
+    #f3f6f7 10px,
+    #eff3f4 10px,
+    #eff3f4 11px
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 25px;
+  gap: 8px;
+}
+.planned-photo-pair span {
+  font:
+    0.72rem Georgia,
+    serif;
+  letter-spacing: 0.18em;
+  color: #6c7b80;
+}
+.planned-photo-pair b {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 1.2rem;
+}
+.planned-photo-pair small {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+.case-editorial .case-timeline {
+  max-width: none;
+}
+@media (min-width: 1600px) {
+  .hero {
+    grid-template-columns: 1.1fr 1fr;
+  }
+  .hero-portrait > img {
+    object-position: 50% 36%;
+  }
+}
+@media (max-width: 1050px) {
+  .hero {
+    min-height: 610px;
+  }
+  .hero-portrait {
+    min-height: 610px;
+  }
+  .hero-doctor-card {
+    left: 22px;
+    right: 24px;
+    padding: 20px;
+  }
+  .hero-doctor-card strong {
+    font-size: 1.4rem;
+  }
+  .hero-doctor-card em {
+    display: block;
+    margin: 3px 0 2px;
+  }
+  .doctor-photo-frame {
+    height: 275px;
+  }
+  .doctor-gallery {
+    gap: 20px;
+  }
+  .portrait-source {
+    right: 24px;
+  }
+}
+@media (max-width: 700px) {
+  .hero {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .hero-copy {
+    padding: 40px 24px 28px;
+  }
+  .hero-portrait {
+    min-height: 0;
+    height: 410px;
+    width: 100%;
+  }
+  .hero-portrait > img {
+    object-position: 50% 30%;
+  }
+  .hero-portrait:after {
+    background: linear-gradient(180deg, #f2f4f5 0%, rgba(242, 244, 245, 0) 15%);
+  }
+  .portrait-overline {
+    top: 24px;
+    right: 20px;
+    font-size: 0.65rem;
+  }
+  .hero-doctor-card {
+    left: 20px;
+    right: 20px;
+    bottom: 32px;
+    padding: 16px 21px;
+  }
+  .hero-doctor-card strong {
+    font-size: 1.5rem;
+  }
+  .hero-doctor-card em {
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 0.75rem;
+  }
+  .hero-doctor-card small {
+    font-size: 0.7rem;
+    margin-bottom: 1px;
+  }
+  .doctor-card-en {
+    font-size: 0.75rem;
+  }
+  .portrait-link {
+    height: 34px;
+    width: 34px;
+  }
+  .portrait-source {
+    right: 20px;
+    bottom: 8px;
+    font-size: 0.65rem;
+  }
+  .doctor-gallery {
+    grid-template-columns: 1fr;
+    gap: 25px;
+    margin-top: 25px;
+  }
+  .doctor-photo-frame {
+    height: 280px;
+  }
+  .doctor-photo.academic .doctor-photo-frame {
+    height: auto;
+    aspect-ratio: 1.498;
+  }
+  .doctor-photo.academic img {
+    object-fit: contain;
+  }
+  .doctor-photo figcaption {
+    padding: 14px 0;
+    gap: 5px;
+    display: block;
+  }
+  .doctor-photo figcaption > span {
+    font-size: 1.1rem;
+  }
+  .doctor-photo figcaption > p {
+    margin-top: 5px;
+  }
+  .doctor-gallery-note {
+    font-size: 0.8rem;
+  }
+  .case-editorial {
+    padding: 28px 20px;
+  }
+  .planned-photo-pair {
+    gap: 12px;
+    margin-top: 23px;
+  }
+  .planned-photo-pair > div {
+    min-height: 150px;
+    padding: 18px 9px;
+  }
+  .planned-photo-pair b {
+    font-size: 1rem;
+  }
+  .planned-photo-pair small {
+    font-size: 0.75rem;
+  }
+  .case-editorial .case-timeline {
+    font-size: 0.73rem;
+  }
+}
