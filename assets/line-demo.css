@@ -82,6 +82,23 @@ p+p {
 .muted {
   color:var(--muted);
 }
+.treatment-highlights {
+  display:grid;
+  gap:12px;
+  margin:24px 0;
+}
+.treatment-highlights article {
+  padding:18px;
+  border-left:3px solid var(--gold);
+  background:var(--pale);
+}
+.treatment-highlights article h3 {
+  margin:0 0 8px;
+  font-size:1rem;
+}
+.treatment-highlights article p {
+  font-size:.94rem;
+}
 .skip-link {
   position:fixed;
   top:-100px;
