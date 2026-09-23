@@ -17,7 +17,10 @@ for (const file of ["app.js", "content.js"])
 check(html.includes("noindex,nofollow,noarchive"), "検索除外のデモ設定");
 check(/<html lang="ja">/.test(html), "日本語文書");
 for (const [, ref] of html.matchAll(/(?:src|href)="(assets\/[^"#]+)"/g))
-  check(fs.existsSync(path.join(root, "dist", ref)), `参照ファイル ${ref}`);
+  check(
+    fs.existsSync(path.join(root, "dist", ref.split("?")[0])),
+    `参照ファイル ${ref}`,
+  );
 const sandbox = { window: {} };
 vm.runInNewContext(
   fs.readFileSync(path.join(root, "dist/assets/content.js"), "utf8"),
@@ -43,4 +46,9 @@ check(
   "外部通信の参照なし",
 );
 check(c.doctor.name === "上田 敬博", "医師名");
+for (const photo of c.doctor.gallery)
+  check(
+    fs.existsSync(path.join(root, "dist", photo.image)),
+    `医師画像 ${photo.image}`,
+  );
 console.log("Static checks passed. Browser layout must be checked separately.");

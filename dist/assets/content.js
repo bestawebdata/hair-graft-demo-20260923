@@ -15,6 +15,26 @@ window.SITE_CONTENT = {
     name: "上田 敬博",
     credential: "医学博士",
     english: "Takahiro Ueda",
+    gallery: [
+      {
+        image: "assets/doctor/ueda-clinical.webp",
+        width: 800,
+        height: 919,
+        alt: "提供された医師紹介資料に掲載されている診療中の上田敬博医師",
+        label: "臨床の現場から",
+        caption: "医師紹介資料に掲載された診療風景",
+        className: "clinical",
+      },
+      {
+        image: "assets/doctor/ueda-isbi-2018.webp",
+        width: 1400,
+        height: 935,
+        alt: "ISBI 2018の会場で発表する上田敬博医師。提供された医師紹介資料より",
+        label: "学術活動の記録",
+        caption: "国際熱傷学会 ISBI 2018・インド／デリー",
+        className: "academic",
+      },
+    ],
     source:
       "提供された治療説明資料に記載された経歴の抜粋です。現在の所属・役職、診療・監修体制は公開前に確認します。",
     career: [
