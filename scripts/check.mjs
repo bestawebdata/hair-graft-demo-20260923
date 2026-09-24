@@ -68,3 +68,10 @@ check(lineHtml.includes("noindex,nofollow,noarchive"), "LINEデモの検索除�
 check(html.includes('href="line/index.html"'), "治療LPからLINEデモへのリンク");
 for (const [, ref] of lineHtml.matchAll(/(?:src|href)="((?:\.\.\/assets\/)[^"#]+)"/g))
   check(fs.existsSync(path.resolve(root, "dist/line", ref.split("?")[0])), `LINE参照ファイル ${ref}`);
+const coordinationDir = path.join(root, 'dist/coordination');
+const coordinationHtml = fs.readFileSync(path.join(coordinationDir, 'index.html'), 'utf8');
+check(coordinationHtml.includes('noindex,nofollow,noarchive'), '日程調整デモの検索除外設定');
+check(html.includes('href="coordination/index.html"'), '治療LPから日程調整デモへのリンク');
+for (const file of ['core.js', 'app.js']) execFileSync(process.execPath, ['--check', path.join(coordinationDir, file)]);
+for (const [, ref] of coordinationHtml.matchAll(/(?:src|href)="([^"#]+)"/g))
+  check(!/^https?:/.test(ref) && fs.existsSync(path.resolve(coordinationDir, ref.split('?')[0])), `日程調整参照ファイル ${ref}`);

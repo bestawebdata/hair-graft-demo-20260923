@@ -3,6 +3,7 @@
 - [比較写真6組を掲載した最新版デモ](https://bestawebdata.github.io/hair-graft-demo-20260923/?v=cases-1#cases)
 - [GitHubリポジトリ](https://github.com/bestawebdata/hair-graft-demo-20260923)
 - [LINE画面の操作デモ](https://bestawebdata.github.io/hair-graft-demo-20260923/line/)
+- [日程調整・運営管理デモ](https://bestawebdata.github.io/hair-graft-demo-20260923/coordination/?v=coord-1)
 - ソースブランチ：`codex/hair-graft-demo`
 - 公開ブランチ：`gh-pages`（`dist/` の内容だけを公開）
 
@@ -14,6 +15,8 @@
 
 30万円（仮・検討中）、伊丹市内の仮会場、開催日未定、実送信しないフォームは維持しています。
 
+2026年9月24日、先生・施設の空き時間照合、仮押さえ、患者の回答集計、開催確定を体験する `/coordination/` を追加しました。大阪・伊丹・神戸の架空施設・予定・患者だけで動きます。集客LPの末尾からも開けます。実カレンダー・LINE通知・保存・認証は未接続です。操作方法は `COORDINATION_DEMO.md` を参照してください。
+
 ## ローカルで見る
 
 `dist/index.html` をブラウザで直接開くか、Macでは `デモを開く.command` をダブルクリックしてください。ネット接続・ビルド・サーバーは不要です。別フォルダ `hair-graft-demo-local-review` も同じ最新版に同期しています。
@@ -22,4 +25,4 @@ GitHub Pagesは公開URLです。デモ表記と検索除外を設定してい�
 
 ## 検証・確認事項
 
-構文・画像参照・フォーム等のDOM検証を実施しています。自動ブラウザはこの実行環境の権限制約で起動できず、実画面のスクリーンショット検証は未完了です。詳しくは `QA.md` を参照してください。医療・広告表現・価格・施設の最終確認事項は `../TODO.md` にまとめています。
+構文・画像参照・フォーム等のDOM検証を実施しています。新しい日程調整デモは45項目の動作検証に加え、Codex内ブラウザでPC幅・スマートフォン幅の表示と回答→開催確定を確認しました。以前のLP・LINEに対する描画検証の制約は過去の検証記録に残しています。詳しくは `QA.md` を参照してください。医療・広告表現・価格・施設の最終確認事項は `../TODO.md` にまとめています。

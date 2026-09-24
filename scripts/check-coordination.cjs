@@ -1,0 +1,25 @@
+const assert = require('node:assert/strict');
+const C = require('../dist/coordination/core.js');
+let count = 0;
+function check(label, fn) { fn(); count++; console.log('PASS ' + label); }
+const throws = fn => assert.throws(fn);
+check('時間の重なりと5時間の開催枠から候補を抽出', () => { const s=C.seed(),m=C.candidates(s);assert.equal(m.length,5);assert.equal(m.filter(c=>!c.blocked).length,3);assert(!m.some(c=>c.date==='2026-10-18'));assert.equal(m.find(c=>c.clinicId==='itami'&&c.date==='2026-10-11').start,'09:00'); });
+check('空き時間の変更で候補を自動再計算',()=>{const s=C.seed();s.doctor.availability.find(r=>r.date==='2026-10-18').end='14:00';assert(C.candidates(s).some(c=>c.date==='2026-10-18'));});
+check('受け入れ人数が開催目安未満の医療機関は候補外',()=>{const s=C.seed();s.clinics.find(c=>c.id==='kobe').capacity=4;assert(!C.candidates(s).some(c=>c.clinicId==='kobe'));});
+check('初期の4人では開催確定できない',()=>{const s=C.seed();assert.equal(C.readiness(s,s.events[0]).ready,false);throws(()=>C.confirm(s,'E1',['P01','P02','P03','P04']));assert.equal(s.events[0].status,'held');});
+check('先生の同日の別会場を重複仮押さえできない',()=>{const s=C.seed(),c=C.candidates(s).find(c=>c.clinicId==='itami'&&c.date==='2026-10-10');throws(()=>C.hold(s,c.key,'2026-10-03'));assert.equal(s.events.length,1);});
+check('期限は現在より後・開催日より前の実在日付に限定',()=>{const s=C.seed(),key=C.candidates(s).find(c=>!c.blocked).key;for(const d of ['2026-02-30','2026-10-01','2026-10-19','broken'])throws(()=>C.hold(s,key,d));});
+check('仮押さえ後は同じ枠を二重に確保できない',()=>{const s=C.seed(),c=C.candidates(s).find(c=>!c.blocked);const e=C.hold(s,c.key,'2026-10-03');assert.equal(e.status,'held');throws(()=>C.hold(s,c.key,'2026-10-03'));});
+check('患者の再回答を重複人数として数えない',()=>{const s=C.seed();C.respond(s,'E1','P05','yes');C.respond(s,'E1','P05','yes');assert.equal(C.eligible(s,'E1').length,5);C.respond(s,'E1','P05','pending');assert.equal(C.eligible(s,'E1').length,4);C.respond(s,'E1','P05','no');assert.equal(C.eligible(s,'E1').length,4);});
+check('未登録の患者・不正な回答を拒否',()=>{const s=C.seed();throws(()=>C.respond(s,'E1','P99','yes'));throws(()=>C.respond(s,'E1','P05','invalid'));assert.equal(C.eligible(s,'E1').length,4);});
+check('参加者の重複と会場の上限超過を拒否',()=>{const s=C.seed();C.respond(s,'E1','P05','yes');C.respond(s,'E1','P06','yes');throws(()=>C.confirm(s,'E1',['P01','P01','P02','P03','P04']));throws(()=>C.confirm(s,'E1',['P01','P02','P03','P04','P05','P06']));assert.equal(s.events[0].status,'held');});
+check('複数日を希望した人は1つの開催確定後に他の人数から除外',()=>{const s=C.seed(),key=C.candidates(s).find(c=>c.clinicId==='itami'&&!c.blocked).key,e2=C.hold(s,key,'2026-10-03');const ids=['P01','P02','P03','P04','P05'];ids.forEach(id=>C.respond(s,e2.id,id,'yes'));C.respond(s,'E1','P05','yes');assert.equal(C.eligible(s,e2.id).length,5);C.confirm(s,'E1',ids);assert.equal(C.eligible(s,e2.id).length,0);throws(()=>C.confirm(s,e2.id,ids));throws(()=>C.respond(s,e2.id,'P01','yes'));assert.equal(s.patients.filter(p=>p.assignedEventId==='E1').length,5);});
+check('確定後の二重確定・仮押さえ解除・回答を拒否',()=>{const s=C.seed();C.respond(s,'E1','P05','yes');C.confirm(s,'E1',['P01','P02','P03','P04','P05']);throws(()=>C.confirm(s,'E1',['P01','P02','P03','P04','P05']));throws(()=>C.release(s,'E1'));throws(()=>C.respond(s,'E1','P06','yes'));});
+check('先生の空き時間が変われば募集と確定を停止',()=>{const s=C.seed();C.respond(s,'E1','P05','yes');C.updateAvailability(s,'doctor',s.doctor.availability.filter(r=>r.date!=='2026-10-10'));assert(C.eventIssue(s,s.events[0]).includes('先生'));throws(()=>C.respond(s,'E1','P06','yes'));throws(()=>C.confirm(s,'E1',['P01','P02','P03','P04','P05']));});
+check('医療機関の空き時間が変われば募集を停止',()=>{const s=C.seed();C.updateAvailability(s,'osaka',[]);assert(C.eventIssue(s,s.events[0]).includes('医療機関'));throws(()=>C.respond(s,'E1','P05','yes'));});
+check('不正な時間帯の更新は状態を壊さない',()=>{const s=C.seed(),before=JSON.stringify(s.doctor.availability);for(const [start,end] of [['17:00','09:00'],['10:00','10:00'],['25:00','26:00']])throws(()=>C.updateAvailability(s,'doctor',[{date:'2026-10-10',start,end}]));assert.equal(JSON.stringify(s.doctor.availability),before);});
+check('締切当日まで回答可能、翌日に失効・枠を解放',()=>{const s=C.seed();C.advance(s);C.advance(s);assert.equal(s.events[0].status,'held');C.advance(s);assert.equal(s.events[0].status,'expired');throws(()=>C.respond(s,'E1','P05','yes'));assert(!C.candidates(s).find(c=>c.clinicId==='itami'&&c.date==='2026-10-10').blocked);assert.equal(s.responses.E1.P01,'yes');});
+check('仮押さえ解除後も回答履歴を保持し新しい募集へ流用しない',()=>{const s=C.seed();C.release(s,'E1');const c=C.candidates(s).find(c=>c.clinicId==='osaka'&&c.date==='2026-10-10');const e=C.hold(s,c.key,'2026-10-03');assert.equal(C.eligible(s,e.id).length,0);assert.equal(s.responses.E1.P01,'yes');});
+check('候補がなくてもエントリーを追加できる',()=>{const s=C.seed();C.updateAvailability(s,'doctor',[]);const p=C.addPatient(s);assert.equal(s.patients.length,9);assert.equal(p.id,'P09');assert.equal(C.candidates(s).length,0);});
+check('回答期限を設けられない直前日程を候補に出さない',()=>{const s=C.seed();s.today='2026-10-09';assert(!C.candidates(s).some(c=>c.date==='2026-10-10'));});
+console.log(`${count} scheduling domain checks passed.`);
