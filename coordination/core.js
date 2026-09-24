@@ -88,7 +88,7 @@
     const s = seed();
     s.responses.E1 = { P01: 'yes', P02: 'yes', P03: 'yes', P04: 'yes', P05: 'yes', P06: 'yes', P07: 'pending', P08: 'no' };
     s.patients.forEach((p, i) => { p.intake = { readiness: i === 5 ? 'consult' : i === 6 ? 'undecided' : 'ready', alternatives: [0, 2, 5, 7].includes(i) ? 'limited' : i === 6 ? 'ask' : 'flexible', followup: i === 5 ? 'contact' : i === 7 ? 'stop' : 'wait' }; });
-    s.activity = [{ date: s.today, message: '8人の受付例を開始。手続きへ進める5人・相談1人・未定1人・本人希望で案内停止1人。すべて架空の回答です。' }];
+    s.activity = [{ date: s.today, message: '8人の受付例を開始。予約を希望する5人・まず相談したい1人・まだ決めていない1人・案内を止めたい1人。すべて架空の回答です。' }];
     return s;
   }
   function receptionPlan(s, eventId) {
@@ -98,10 +98,10 @@
       let kind, title, reason, next;
       if (p.assignedEventId) { kind = 'assigned'; title = '案内先確定済み'; reason = 'すでに個別案内対象の日程があります。'; next = '確定済みの案内を確認'; }
       else if (a.followup === 'stop') { kind = 'paused'; title = '本人希望で案内停止'; reason = '本人が「今は案内不要」と回答。登録の削除や治療のキャンセル確定はしません。'; next = '自動の案内対象から外す'; }
-      else if (a.readiness === 'consult' || a.followup === 'contact') { kind = 'consult'; title = '個別相談を先に'; reason = '本人が手続き前の相談を希望しています。'; next = '櫻庭さんが条件を確認'; }
-      else if (response === 'no') { kind = 'waiting'; title = '別の候補を待つ'; reason = a.alternatives === 'limited' ? 'この候補は都合が合わず、希望条件も限られています。' : 'この候補は都合が合いません。'; next = a.alternatives === 'flexible' ? '別日・別会場を提案' : '条件に合う候補を確認'; }
-      else if (a.readiness !== 'ready' || response !== 'yes') { kind = 'pending'; title = '本人の回答待ち'; reason = 'この日程で手続きに進めるという回答がそろっていません。'; next = '意思・日程を確認する案内'; }
-      else { kind = 'ready'; title = '手続きの案内へ進める'; reason = a.alternatives === 'limited' ? 'この日程で参加可能。別の候補が難しいため先に案内を提案します。' : a.alternatives === 'flexible' ? 'この日程で参加可能。代案も受け取れますが、別日への変更には再回答が必要です。' : 'この日程で参加可能。他の候補へ変える場合は希望の確認が必要です。'; next = '今回の日程を案内'; }
+      else if (a.readiness === 'consult' || a.followup === 'contact') { kind = 'consult'; title = '個別相談を先に'; reason = '予約を決める前に、担当者と相談したい方です。'; next = '櫻庭さんが条件を確認'; }
+      else if (response === 'no') { kind = 'waiting'; title = '別の候補を待つ'; reason = a.alternatives === 'limited' ? 'この日時は来院できず、ほかの日時・会場も希望していません。' : 'この日時には来院できません。'; next = a.alternatives === 'flexible' ? '別日・別会場を提案' : '条件に合う候補を確認'; }
+      else if (a.readiness !== 'ready' || response !== 'yes') { kind = 'pending'; title = '本人の回答待ち'; reason = 'この日時に来院できるか、予約を進めたいかを確認中です。'; next = '来院できるか・予約を希望するかを確認'; }
+      else { kind = 'ready'; title = '予約をご案内できる'; reason = a.alternatives === 'limited' ? 'この日時で予約を希望しています。ほかの日時・会場は希望していないため、ご案内の順番を先にしています。' : a.alternatives === 'flexible' ? 'この日時で来院でき、予約も希望しています。ほかの日時・会場も相談できます。変更するときは、ご本人に確認します。' : 'この日時で来院でき、予約も希望しています。日時・会場を変更する場合は、先に相談が必要です。'; next = 'この日時の予約についてご案内'; }
       return { patient: p, kind, title, reason, next, order, response, intake: a };
     });
     const priority = { ready: 0, consult: 1, pending: 2, waiting: 3, paused: 4, assigned: 5 };
@@ -129,7 +129,7 @@
     if (e.status !== 'held' || eventIssue(s, e)) throw new Error('この日程の回答受付は停止しています。');
     if (p.assignedEventId) throw new Error('案内先が確定しています。運営担当者へご相談ください。');
     s.responses[e.id] ||= {}; s.responses[e.id][p.id] = value;
-    log(s, `${p.label}が${e.date}の候補に回答。手続きの案内へ進める方は現在${eligible(s, e.id).length}人です。`);
+    log(s, `${p.label}が${e.date}の候補に回答。予約をご案内できる方は現在${eligible(s, e.id).length}人です。`);
   }
   function confirm(s, eventId, ids) {
     const e = getEvent(s, eventId), ready = readiness(s, e), selected = new Set(ids);
