@@ -4,6 +4,7 @@
 - [GitHubリポジトリ](https://github.com/bestawebdata/hair-graft-demo-20260923)
 - [LINE画面の操作デモ](https://bestawebdata.github.io/hair-graft-demo-20260923/line/)
 - [日程調整・運営管理デモ](https://bestawebdata.github.io/hair-graft-demo-20260923/coordination/?v=coord-1)
+- [受付・案内順の8人のデモ](https://bestawebdata.github.io/hair-graft-demo-20260923/coordination/?v=intake-1#reception)
 - ソースブランチ：`codex/hair-graft-demo`
 - 公開ブランチ：`gh-pages`（`dist/` の内容だけを公開）
 
