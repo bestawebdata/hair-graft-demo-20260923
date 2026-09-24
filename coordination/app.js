@@ -1,7 +1,7 @@
 (() => {
   'use strict';
   const C = window.CoordinationCore, $ = s => document.querySelector(s);
-  let state = C.seed(), view = 'admin', provider = 'doctor', patientId = 'P05', lastFocus = null, toastTimer;
+  let state = C.seed(), view = 'admin', provider = 'doctor', patientId = 'P05', receptionEventId = 'E1', lastFocus = null, toastTimer;
   const esc = x => String(x ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const date = iso => new Intl.DateTimeFormat('ja-JP', { month: 'long', day: 'numeric', weekday: 'short', timeZone: 'UTC' }).format(new Date(`${iso}T00:00:00Z`));
   const shortDate = iso => `${Number(iso.slice(5, 7))}/${Number(iso.slice(8, 10))}`;
@@ -22,11 +22,44 @@
   const badge = s => `<span class="badge ${s.className}">${s.text}</span>`;
   function showView(next, focus = true) {
     view = next;
-    for (const key of ['admin', 'providers', 'patient']) $(`#${key}-view`).hidden = key !== next;
+    for (const key of ['admin', 'providers', 'patient', 'reception']) $(`#${key}-view`).hidden = key !== next;
     document.querySelectorAll('[data-view]').forEach(b => b.dataset.view === next ? b.setAttribute('aria-current', 'page') : b.removeAttribute('aria-current'));
     const titles = { admin: ['日程調整を、ひとつの画面で。', '先生と医療機関の空き時間を照合。参加希望を集め、開催の判断につなげます。'], providers: ['空き時間の回答が、候補日になる。', '先生・医療機関それぞれの回答を変更して、自動照合の動きをお試しください。'], patient: ['候補日を見て、参加希望を回答。', '患者さんには会場と日程を案内。人数や内部の調整状況は表示しません。'] };
+    titles.reception = ['受付の判断を、次の案内につなぐ。', '本人の回答から、手続きを進める方・相談する方・次回を待つ方を整理します。'];
     $('#page-title').textContent = titles[next][0]; $('#page-intro').textContent = titles[next][1];
     if (focus) $('#main').focus();
+  }
+  const intakeLabels = { readiness: { ready: '候補が合えば手続きに進める', consult: '担当者に相談してから決めたい', undecided: 'まだ検討中' }, alternatives: { limited: '回答した候補に限りたい', flexible: '別日・別会場の提案も受けたい', ask: '変更する前に相談したい' }, followup: { wait: '今後の日程案内を受け取る', contact: '案内の前に担当者と相談したい', stop: 'いったん日程案内を止めたい' } };
+  function intakeFields(p) {
+    const values = C.intakeOf(p);
+    return `<div class="intake-fields">${[['readiness', '予約手続きへのご希望'], ['alternatives', 'ほかの日程・会場のご提案'], ['followup', '今後のご案内']].map(([key, label]) => `<label>${label}<select name="${key}" required>${Object.entries(intakeLabels[key]).map(([value, text]) => `<option value="${value}"${values[key] === value ? ' selected' : ''}>${text}</option>`).join('')}</select></label>`).join('')}</div>`;
+  }
+  function patientIntake(p) {
+    if (p.assignedEventId) return '';
+    return `<details class="patient-intake"><summary>受付の希望を伝える・変更する</summary><p>候補ごとの回答に加えて、ご案内の進め方を選べます。別日への変更は、その都度確認します。</p><form id="patient-intake-form"><input type="hidden" name="patientId" value="${p.id}">${intakeFields(p)}<button type="submit" class="button outline">受付の希望を反映する〈デモ〉</button></form></details>`;
+  }
+  function receptionHTML() {
+    const events = state.events.filter(e => e.status === 'held');
+    const sample = `<div class="guide-card"><div><b>8人の受付例で試す</b><p>手続きへ進める5人、相談1人、未定1人、本人希望で案内停止1人。架空の回答を読み込めます。</p></div>${button('8人の受付例を読み込む', 'reception-sample', '', 'outline')}</div>`;
+    if (!events.length) return `${sample}<div class="empty-state"><h2>次の募集日程をお待ちください。</h2><p>運営画面で日程を仮押さえすると、受付状況から案内候補を提案します。確定済みの対象者は運営画面で確認できます。</p></div>`;
+    if (!events.some(e => e.id === receptionEventId)) receptionEventId = events[0].id;
+    const plan = C.receptionPlan(state, receptionEventId), e = plan.event;
+    return `${sample}<div class="reception-overview panel"><div><p class="eyebrow">RECEPTION ASSIST</p><h2>この日程で、誰に何を案内するか。</h2><p>参加可能で、手続きに進める方を抽出。同じ条件なら、別の候補が難しい方を先に提案します。</p></div><label>確認する日程<select id="reception-event">${events.map(x => `<option value="${x.id}"${x.id === e.id ? ' selected' : ''}>${date(x.date)}・${esc(clinic(x.clinicId).area)}</option>`).join('')}</select></label></div>
+      <div class="reception-summary"><div><span>今回の案内候補</span><strong>${plan.proposed.length}<small>人 / ${e.capacity}枠</small></strong></div><div><span>相談・回答の確認</span><strong>${plan.rows.filter(r => ['consult', 'pending'].includes(r.kind)).length}<small>人</small></strong></div><div><span>次回待ち・案内停止</span><strong>${plan.rows.filter(r => ['waiting', 'paused'].includes(r.kind) || (r.kind === 'ready' && !plan.proposed.includes(r.patient.id))).length}<small>人</small></strong></div></div>
+      <div class="reception-decision panel"><div><b>${plan.issue ? '日程の確認が必要です。' : plan.canConfirm ? `${plan.proposed.length}人の案内候補がそろいました。` : '本人の回答・開催条件がそろうのを待ちます。'}</b><p>${plan.issue ? esc(plan.issue) : '提案を確認し、必要に応じて対象者を変更してから開催を確定できます。'}</p></div>${button('提案した対象者で開催確認へ', 'confirm', e.id, '', !plan.canConfirm)}</div>
+      <p class="section-note reception-rule">提案順：この日程で参加可能 ＋ 手続きへ進める → 候補が限られる方 → 同条件では登録順。年齢・居住地・治療効果・キャンセル確率は順位に使いません。代案を受け取れる方も、本人の回答なしに別日へ移しません。</p>
+      <div class="reception-grid">${plan.rows.map((r, i) => `<article class="reception-card ${plan.proposed.includes(r.patient.id) ? 'proposed' : ''}" data-patient="${r.patient.id}"><div class="card-top"><b>${esc(r.patient.label)}</b>${badge({ text: plan.proposed.includes(r.patient.id) ? `案内候補 ${plan.proposed.indexOf(r.patient.id) + 1}` : r.title, className: plan.proposed.includes(r.patient.id) ? 'success' : r.kind === 'consult' ? 'amber' : 'neutral' })}</div><dl><div><dt>日程の回答</dt><dd>${({ yes: '参加可能', no: '今回は都合が合わない', pending: '未定・未回答' })[r.response]}</dd></div><div><dt>手続き</dt><dd>${esc(intakeLabels.readiness[r.intake.readiness])}</dd></div><div><dt>代案</dt><dd>${esc(intakeLabels.alternatives[r.intake.alternatives])}</dd></div></dl><p class="reception-reason">${esc(r.reason)}</p><p class="reception-next"><span>次の対応</span>${esc(r.next)}</p><div class="reception-actions">${button('本人回答を変更', 'intake-edit', r.patient.id, 'quiet', Boolean(r.patient.assignedEventId))}${button('対応文を見る', 'intake-message', r.patient.id, 'text', Boolean(plan.issue) || r.kind === 'paused' || r.kind === 'assigned')}</div></article>`).join('')}</div><p class="small muted">本人回答を前提にした受付順の提案です。臨床上の優先度や施術可否を判定する機能ではありません。相談希望の方には個別対応を残します。</p>`;
+  }
+  function intakeModal(id) {
+    const p = state.patients.find(x => x.id === id);
+    openModal(`<p class="eyebrow">PATIENT PREFERENCES</p><h2 id="modal-title">${esc(p.label)}の本人回答</h2><p>本人から確認した希望として反映する操作デモです。人物評価やキャンセル確率を入力する欄はありません。</p><form id="intake-form"><input type="hidden" name="patientId" value="${p.id}">${intakeFields(p)}<button type="submit" class="button">本人回答を反映して再提案する</button></form>`);
+  }
+  function intakeMessage(id) {
+    const plan = C.receptionPlan(state, receptionEventId), r = plan.rows.find(x => x.patient.id === id), e = plan.event;
+    if (!r || plan.issue || ['paused', 'assigned'].includes(r.kind)) throw new Error('この方への新しい案内は作成しません。');
+    const opening = `${r.patient.label} 様\n`;
+    const body = r.kind === 'consult' ? 'ご相談の希望を受け付けました。日程や会場など、ご希望の条件を担当者が確認してから、次の手順をご案内します。' : r.kind === 'pending' ? `${date(e.date)}・${clinic(e.clinicId).name}について、ご参加の可否と、予約手続きに進むご希望をお知らせください。ご相談してから決めることもできます。` : plan.proposed.includes(id) ? `${date(e.date)}・${clinic(e.clinicId).name}への参加希望を承っています。開催が確定しましたら、診察・説明と予約手続きについてあらためてご案内します。現時点では予約確定ではありません。` : r.intake.alternatives === 'flexible' ? '別の日程・会場の候補が整い次第、ご案内します。新しい候補のご都合を確認してから手続きを進めます。' : 'ご希望に合う候補や次の空き枠を確認しています。条件が整い次第、あらためてご案内します。';
+    openModal(`<p class="eyebrow">RECEPTION MESSAGE / NOT SENT</p><h2 id="modal-title">次の対応に合わせた文面</h2><p>${esc(r.next)}。デモでは作成のみで送信しません。</p><label class="field-label">文面（未送信）<textarea rows="10" readonly>${esc(opening + body + '\n\n※架空の回答・会場によるデモ文面です。送信されていません。')}</textarea></label>`);
   }
   function adminHTML() {
     const matches = C.candidates(state), available = matches.filter(c => !c.blocked);
@@ -34,9 +67,9 @@
     const needsAction = activeEvents.filter(e => C.readiness(state, e).ready).length;
     const entryCount = state.patients.filter(p => !p.assignedEventId).length;
     const waitingLabel = activeEvents.some(e => e.status === 'held' && !C.eventIssue(state, e)) ? '候補日を案内中' : '次の日程案内待ち';
-    return `<div class="metrics"><div><span>エントリー</span><strong>${state.patients.length}<small>人</small></strong><p>地域の希望入力なし</p></div><div><span>新たに確保できる候補</span><strong>${available.length}<small>件</small></strong><p>先生 × 医療機関を自動照合</p></div><div><span>開催判断を待つ日程</span><strong>${needsAction}<small>件</small></strong><p>参加希望5人以上</p></div><div><span>開催確定</span><strong>${state.events.filter(e => e.status === 'confirmed').length}<small>件</small></strong><p>次の候補を待つ登録者 ${entryCount}人</p></div></div>
-      <div class="guide-card"><div class="guide-icon" aria-hidden="true">↗</div><div><b>まずは「5人目の回答」を試してみましょう。</b><p>患者さんの画面でデモ患者05が参加希望を回答すると、開催を判断できる状態に変わります。</p></div>${button('患者画面を開く →', 'try-patient', '', 'outline')}</div>
-      <ol class="process-strip"><li><b>01</b>空き時間を回答</li><li><b>02</b>候補日を自動照合</li><li><b>03</b>仮押さえ・参加希望</li><li><b>04</b>運営が開催を確定</li></ol>
+    return `<div class="metrics"><div><span>エントリー</span><strong>${state.patients.length}<small>人</small></strong><p>地域の希望入力なし</p></div><div><span>新たに確保できる候補</span><strong>${available.length}<small>件</small></strong><p>先生 × 医療機関を自動照合</p></div><div><span>開催判断を待つ日程</span><strong>${needsAction}<small>件</small></strong><p>手続きへ進める5人以上</p></div><div><span>開催確定</span><strong>${state.events.filter(e => e.status === 'confirmed').length}<small>件</small></strong><p>次の候補を待つ登録者 ${entryCount}人</p></div></div>
+      <div class="guide-card"><div class="guide-icon" aria-hidden="true">↗</div><div><b>${needsAction ? '開催判断に進める日程があります。' : 'まずは「患者さんの回答」を試してみましょう。'}</b><p>${needsAction ? '受付・案内順で本人の希望を確認し、対象者を選べます。' : '患者画面で参加希望と手続きへの希望を反映すると、案内候補の人数が更新されます。'}</p></div>${button('患者画面を開く →', 'try-patient', '', 'outline')}</div>
+      <div class="reception-shortcut">${button('受付・案内順を自動整理する →', 'reception', '', 'outline')}<span>本人の条件から、次に誰へ何を案内するかを提案</span></div><ol class="process-strip"><li><b>01</b>空き時間を回答</li><li><b>02</b>候補日を自動照合</li><li><b>03</b>仮押さえ・参加希望</li><li><b>04</b>運営が開催を確定</li></ol>
       <div class="section-heading"><div><p class="eyebrow">IN PROGRESS</p><h2>仮押さえ・開催状況</h2></div><span class="muted">運営側だけの情報です</span></div>
       <div class="event-grid">${activeEvents.length ? activeEvents.map(e => eventCard(e)).join('') : '<div class="empty-state"><h3>現在、募集している日程はありません。</h3><p>下の候補から会場と日程を仮押さえすると、患者さんの回答画面に表示されます。</p></div>'}</div>
       <div class="section-heading"><div><p class="eyebrow">AUTOMATIC MATCHING</p><h2>空き時間から見つかった候補</h2></div>${button('空き時間を変更する', 'providers', '', 'quiet')}</div>
@@ -48,7 +81,7 @@
   }
   function eventCard(e) {
     const r = C.readiness(state, e), isHeld = e.status === 'held', count = isHeld ? r.count : e.participants.length;
-    return `<article class="event-card" data-event="${e.id}"><div class="card-top"><span class="area-pill">${esc(clinic(e.clinicId).area)}会場</span>${badge(status(e))}</div><h3>${date(e.date)}</h3><p class="time-range">${e.start} — ${e.end}</p><p>${esc(clinic(e.clinicId).name)}</p><div class="participation"><div><span>${isHeld ? '参加希望' : '個別案内対象'}</span><strong>${count}<small>人</small></strong></div><div class="progress-track" aria-hidden="true"><span style="width:${Math.min(100, count / state.settings.minimum * 100)}%"></span></div><p>${isHeld ? r.ready ? '人数の目安に達しました。参加者を確認して開催判断へ。' : `開催判断まで、あと${r.remaining}人。` : '開催を確定しました。施術予約は別途ご案内・確認します。'}</p></div>${isHeld ? `<p class="deadline">仮押さえ・回答期限 <b>${date(e.deadline)}まで</b></p>` : ''}${r.issue ? `<p class="inline-alert" role="status">${esc(r.issue)}。患者向けの新規回答を停止しています。</p>` : ''}<div class="card-actions">${isHeld ? button('参加者を確認して開催確定', 'confirm', e.id, '', !r.ready) : ''}${button('案内文を見る', 'message', e.id, 'quiet', Boolean(r.issue))}${isHeld ? button('仮押さえを解除', 'release', e.id, 'text') : ''}</div></article>`;
+    return `<article class="event-card" data-event="${e.id}"><div class="card-top"><span class="area-pill">${esc(clinic(e.clinicId).area)}会場</span>${badge(status(e))}</div><h3>${date(e.date)}</h3><p class="time-range">${e.start} — ${e.end}</p><p>${esc(clinic(e.clinicId).name)}</p><div class="participation"><div><span>${isHeld ? '手続きの案内へ進める方' : '個別案内対象'}</span><strong>${count}<small>人</small></strong></div><div class="progress-track" aria-hidden="true"><span style="width:${Math.min(100, count / state.settings.minimum * 100)}%"></span></div><p>${isHeld ? r.ready ? '人数の目安に達しました。参加者を確認して開催判断へ。' : `開催判断まで、あと${r.remaining}人。` : '開催を確定しました。施術予約は別途ご案内・確認します。'}</p></div>${isHeld ? `<p class="deadline">仮押さえ・回答期限 <b>${date(e.deadline)}まで</b></p>` : ''}${r.issue ? `<p class="inline-alert" role="status">${esc(r.issue)}。患者向けの新規回答を停止しています。</p>` : ''}<div class="card-actions">${isHeld ? button('参加者を確認して開催確定', 'confirm', e.id, '', !r.ready) : ''}${button('案内文を見る', 'message', e.id, 'quiet', Boolean(r.issue))}${isHeld ? button('仮押さえを解除', 'release', e.id, 'text') : ''}</div></article>`;
   }
   function providersHTML() {
     const entity = provider === 'doctor' ? state.doctor : clinic(provider);
@@ -57,7 +90,7 @@
   function patientHTML() {
     const p = currentPatient();
     const shown = state.events.filter(e => e.status === 'held' ? !C.eventIssue(state, e) : e.status === 'confirmed' && e.date >= state.today && (!C.eventIssue(state, e) || p.assignedEventId === e.id));
-    return `<div class="patient-controls panel"><div><p class="eyebrow">PATIENT PREVIEW</p><h2>患者さんとして操作する</h2><p>地域の希望は聞かず、会場と日程を見て回答する流れです。</p></div><div class="patient-selector"><label for="patient-select">回答するデモ患者</label><select id="patient-select">${state.patients.map(x => `<option value="${x.id}"${x.id === patientId ? ' selected' : ''}>${esc(x.label)}${x.assignedEventId ? '・案内対象確定' : ''}</option>`).join('')}</select>${button('架空の新規エントリーを追加', 'add-patient', '', 'quiet')}</div></div><div class="patient-preview"><header><span class="brand-symbol">H</span><span>毛根グラフト再生治療<small>施術日程のご案内〈デモ〉</small></span></header><div class="patient-content"><p class="eyebrow">YOUR NEXT STEP</p><h2>参加できる日程を、<br>お聞かせください。</h2><p>大阪・伊丹・神戸エリアの候補をご案内します。会場と日程をご確認のうえ、ご都合をお知らせください。</p><p class="patient-notice">${esc(p.label)}としての操作体験です。回答は実際の申し込み・予約にはなりません。</p>${shown.length ? shown.map(e => patientEvent(e, p)).join('') : '<div class="patient-empty"><span aria-hidden="true">▦</span><h3>次回の日程を調整しています。</h3><p>候補が整い次第、ご案内する流れを体験できます。運営画面で日程を仮押さえすると、ここに表示されます。</p></div>'}<div class="next-time"><h3>今回は予定が合わなくても大丈夫です。</h3><p>エントリーを残して、次のご案内をお待ちいただけます。開催が決まった日程では、費用や当日の流れなどをあらためてご案内します。</p></div></div></div>`;
+    return `<div class="patient-controls panel"><div><p class="eyebrow">PATIENT PREVIEW</p><h2>患者さんとして操作する</h2><p>会場と日程への回答に加え、手続きや代案の希望を伝えられます。</p></div><div class="patient-selector"><label for="patient-select">回答するデモ患者</label><select id="patient-select">${state.patients.map(x => `<option value="${x.id}"${x.id === patientId ? ' selected' : ''}>${esc(x.label)}${x.assignedEventId ? '・案内対象確定' : ''}</option>`).join('')}</select>${button('架空の新規エントリーを追加', 'add-patient', '', 'quiet')}</div></div><div class="patient-preview"><header><span class="brand-symbol">H</span><span>毛根グラフト再生治療<small>施術日程のご案内〈デモ〉</small></span></header><div class="patient-content"><p class="eyebrow">YOUR NEXT STEP</p><h2>参加できる日程を、<br>お聞かせください。</h2><p>大阪・伊丹・神戸エリアの候補をご案内します。会場と日程をご確認のうえ、ご都合をお知らせください。</p><p class="patient-notice">${esc(p.label)}としての操作体験です。回答は実際の申し込み・予約にはなりません。</p>${patientIntake(p)}${shown.length ? shown.map(e => patientEvent(e, p)).join('') : '<div class="patient-empty"><span aria-hidden="true">▦</span><h3>次回の日程を調整しています。</h3><p>候補が整い次第、ご案内する流れを体験できます。運営画面で日程を仮押さえすると、ここに表示されます。</p></div>'}<div class="next-time"><h3>今回は予定が合わなくても大丈夫です。</h3><p>エントリーを残して、次のご案内をお待ちいただけます。開催が決まった日程では、費用や当日の流れなどをあらためてご案内します。</p></div></div></div>`;
   }
   function patientEvent(e, p) {
     const response = state.responses[e.id]?.[p.id] || 'pending', assigned = p.assignedEventId === e.id, confirmed = e.status === 'confirmed', issue = C.eventIssue(state, e);
@@ -65,7 +98,7 @@
   }
   function render() {
     $('#demo-date').textContent = `${state.today.replaceAll('-', '/')}（固定シナリオ）`;
-    $('#admin-view').innerHTML = adminHTML(); $('#providers-view').innerHTML = providersHTML(); $('#patient-view').innerHTML = patientHTML(); showView(view, false);
+    $('#reception-view').innerHTML = receptionHTML(); $('#admin-view').innerHTML = adminHTML(); $('#providers-view').innerHTML = providersHTML(); $('#patient-view').innerHTML = patientHTML(); showView(view, false);
   }
   function openModal(html) {
     lastFocus = document.activeElement; $('#modal-body').innerHTML = html; $('#modal-error').hidden = true; $('#modal-backdrop').hidden = false; document.body.classList.add('modal-open');
@@ -80,8 +113,8 @@
   }
   function confirmModal(id) {
     const e = event(id), r = C.readiness(state, e); if (!r.ready) throw new Error(r.issue || '人数の目安に達していません。');
-    const patients = C.eligible(state, id);
-    openModal(`<p class="eyebrow">REVIEW & CONFIRM</p><h2 id="modal-title">参加者を確認して開催を確定</h2><div class="modal-summary"><b>${date(e.date)} ${e.start}–${e.end}</b><p>${esc(clinic(e.clinicId).name)}</p></div><p>参加希望${patients.length}人のうち、${state.settings.minimum === e.capacity ? e.capacity : `${state.settings.minimum}〜${e.capacity}`}人を個別案内対象として選びます。選ばなかった方は次回の候補を待てます。</p><form id="confirm-form"><input type="hidden" name="eventId" value="${e.id}"><fieldset class="participant-options"><legend>今回の個別案内対象</legend>${patients.map((p, i) => `<label><input type="checkbox" name="participants" value="${p.id}"${i < e.capacity ? ' checked' : ''}><span>${esc(p.label)}<small>${esc(p.age)}・${esc(p.city)}</small></span></label>`).join('')}</fieldset><p class="patient-notice">開催の確定を体験します。施術可否の判断、個別の施術予約、通知の送信は行いません。</p><button type="submit" class="button">開催を確定する〈デモ〉</button></form>`);
+    const plan = C.receptionPlan(state, id), patients = plan.rows.filter(r => r.kind === 'ready').map(r => r.patient);
+    openModal(`<p class="eyebrow">REVIEW & CONFIRM</p><h2 id="modal-title">参加者を確認して開催を確定</h2><div class="modal-summary"><b>${date(e.date)} ${e.start}–${e.end}</b><p>${esc(clinic(e.clinicId).name)}</p></div><p>手続きの案内へ進める${patients.length}人のうち、${state.settings.minimum === e.capacity ? e.capacity : `${state.settings.minimum}〜${e.capacity}`}人を個別案内対象として選びます。本人の参加回答・手続きの希望から提案した方にチェックしています。選ばなかった方は次回の候補を待てます。</p><form id="confirm-form"><input type="hidden" name="eventId" value="${e.id}"><fieldset class="participant-options"><legend>今回の個別案内対象</legend>${patients.map((p, i) => `<label><input type="checkbox" name="participants" value="${p.id}"${plan.proposed.includes(p.id) ? ' checked' : ''}><span>${esc(p.label)}<small>${esc(p.age)}・${esc(p.city)}</small></span></label>`).join('')}</fieldset><p class="patient-notice">開催の確定を体験します。施術可否の判断、個別の施術予約、通知の送信は行いません。</p><button type="submit" class="button">開催を確定する〈デモ〉</button></form>`);
   }
   function messageModal(id) {
     const e = event(id); if (!e || C.eventIssue(state, e)) throw new Error('日程を確認してから案内文を作成してください。');
@@ -97,6 +130,11 @@
       if (action === 'confirm') confirmModal(id);
       if (action === 'message') messageModal(id);
       if (action === 'providers') showView('providers');
+      if (action === 'reception') showView('reception');
+      if (action === 'intake-edit') intakeModal(id);
+      if (action === 'intake-message') intakeMessage(id);
+      if (action === 'reception-sample') openModal(`<p class="eyebrow">RECEPTION SCENARIO</p><h2 id="modal-title">8人の受付例に切り替えますか？</h2><p>今のデモ操作をリセットし、本人の回答に違いがある8人の架空データを読み込みます。</p>${button('受付例を読み込む', 'reception-load')}`);
+      if (action === 'reception-load') { state = C.receptionSeed(); receptionEventId = 'E1'; view = 'reception'; refresh('8人の本人回答をもとに、案内候補を提案しました。'); }
       if (action === 'try-patient') { patientId = state.patients.find(p => !p.assignedEventId && p.id === 'P05')?.id || state.patients.find(p => !p.assignedEventId)?.id || 'P01'; render(); showView('patient'); }
       if (action === 'add-patient') { patientId = C.addPatient(state).id; render(); toast('架空の登録者を追加しました。実際の情報は送信・保存していません。'); $('#patient-select').focus(); }
       if (action === 'release') openModal(`<p class="eyebrow">RELEASE HOLD</p><h2 id="modal-title">仮押さえを解除しますか？</h2><p>${date(event(id).date)}・${esc(clinic(event(id).clinicId).area)}の募集を停止します。回答履歴はこのデモ内に残ります。</p>${button('解除する〈デモ〉', 'release-confirm', id, 'danger')}`);
@@ -106,15 +144,19 @@
     } catch (err) { toast(err.message); }
   });
   document.addEventListener('change', ev => {
+    if (ev.target.id === 'reception-event') { receptionEventId = ev.target.value; $('#reception-view').innerHTML = receptionHTML(); $('#reception-event').focus(); }
     if (ev.target.id === 'provider-select') { provider = ev.target.value; $('#providers-view').innerHTML = providersHTML(); $('#provider-select').focus(); }
     if (ev.target.id === 'patient-select') { patientId = ev.target.value; $('#patient-view').innerHTML = patientHTML(); $('#patient-select').focus(); }
     if (ev.target.matches('#availability-form input[type=checkbox]')) ev.target.closest('.availability-row').querySelectorAll('input[type=time]').forEach(x => { x.disabled = !ev.target.checked; });
   });
   document.addEventListener('submit', ev => {
-    if (!['availability-form', 'hold-form', 'confirm-form'].includes(ev.target.id) && !ev.target.matches('.response-form')) return;
+    if (!['availability-form', 'hold-form', 'confirm-form', 'intake-form', 'patient-intake-form'].includes(ev.target.id) && !ev.target.matches('.response-form')) return;
     ev.preventDefault(); const form = ev.target;
     try {
-      if (form.id === 'availability-form') {
+      if (['intake-form', 'patient-intake-form'].includes(form.id)) {
+        C.updateIntake(state, form.elements.patientId.value, { readiness: form.elements.readiness.value, alternatives: form.elements.alternatives.value, followup: form.elements.followup.value });
+        refresh('本人の希望を反映し、案内候補を再計算しました。');
+      } else if (form.id === 'availability-form') {
         const rows = C.dates.flatMap((date, i) => form.elements[`enabled-${i}`].checked ? [{ date, start: form.elements[`start-${i}`].value, end: form.elements[`end-${i}`].value }] : []);
         C.updateAvailability(state, provider, rows); render(); toast('空き時間を反映し、候補日を再計算しました。'); $('#availability-form button').focus();
       } else if (form.id === 'hold-form') { C.hold(state, form.elements.key.value, form.elements.deadline.value); refresh('仮押さえしました。患者さんの画面に候補日を表示しています。'); }
@@ -141,5 +183,6 @@
   $('#advance').addEventListener('click', () => { C.advance(state); render(); toast('デモ基準日を1日進め、期限を確認しました。'); });
   $('#reset').addEventListener('click', () => openModal(`<p class="eyebrow">RESET DEMO</p><h2 id="modal-title">最初の状態に戻しますか？</h2><p>この画面で変更した空き時間・回答・仮押さえを消し、初期データに戻します。</p>${button('最初から試す', 'reset-confirm')}`));
   window.CoordinationDemo = Object.freeze({ snapshot: () => C.copy(state) });
+  if (location.hash === '#reception') { state = C.receptionSeed(); view = 'reception'; }
   render();
 })();

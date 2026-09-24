@@ -5,7 +5,7 @@
   <meta name="robots" content="noindex,nofollow,noarchive"><meta name="theme-color" content="#163440">
   <meta name="description" content="先生・医療機関・患者さんの日程をまとめる操作デモ。架空データで候補日の自動照合、仮押さえ、参加希望、開催確定を体験できます。">
   <title>日程調整・運営管理デモ｜毛根グラフト再生治療</title>
-  <link rel="stylesheet" href="styles.css?v=coord-1"><script src="core.js?v=coord-1" defer></script><script src="app.js?v=coord-1" defer></script>
+  <link rel="stylesheet" href="styles.css?v=intake-1"><script src="core.js?v=intake-1" defer></script><script src="app.js?v=intake-1" defer></script>
 </head>
 <body>
   <a href="#main" class="skip-link">本文へ移動</a>
@@ -14,13 +14,14 @@
     <aside class="sidebar">
       <a class="brand" href="../index.html"><span class="brand-symbol">H</span><span>毛根グラフト再生治療<small>CARE COORDINATION</small></span></a>
       <p class="sidebar-label">画面を切り替えて体験</p>
-      <nav aria-label="デモの画面"><button type="button" data-view="admin" aria-current="page"><span aria-hidden="true">▦</span>運営管理</button><button type="button" data-view="providers"><span aria-hidden="true">▤</span>先生・医療機関</button><button type="button" data-view="patient"><span aria-hidden="true">◎</span>患者さんの画面</button></nav>
+      <nav aria-label="デモの画面"><button type="button" data-view="admin" aria-current="page"><span aria-hidden="true">▦</span>運営管理</button><button type="button" data-view="reception"><span aria-hidden="true">☷</span>受付・案内順</button><button type="button" data-view="providers"><span aria-hidden="true">▤</span>先生・医療機関</button><button type="button" data-view="patient"><span aria-hidden="true">◎</span>患者さんの画面</button></nav>
       <div class="sidebar-bottom"><span class="mode-dot"></span> 架空データで稼働中<p>この画面の切替は認証機能ではありません。本番の個人情報は扱いません。</p><a href="../index.html">治療紹介サイトへ ↗</a><a href="../line/index.html">LINEデモへ ↗</a></div>
     </aside>
     <main id="main" tabindex="-1">
       <header class="page-header"><div><p class="eyebrow">CARE COORDINATION DEMO</p><h1 id="page-title">日程調整を、ひとつの画面で。</h1><p id="page-intro">先生と医療機関の空き時間を照合。参加希望を集め、開催の判断につなげます。</p></div><button type="button" class="button quiet" id="reset">最初から試す</button></header>
       <div class="simulation-bar"><span>デモ基準日 <strong id="demo-date"></strong></span><button type="button" id="advance">基準日を1日進める →</button><small>期限切れの動きを確認できます</small></div>
       <section id="admin-view" aria-label="運営管理"></section>
+      <section id="reception-view" aria-label="受付と案内順の提案" hidden></section>
       <section id="providers-view" aria-label="先生・医療機関の空き時間回答" hidden></section>
       <section id="patient-view" aria-label="患者さんの画面プレビュー" hidden></section>
       <footer class="page-footer">操作はブラウザ内だけで反映されます。仮押さえ・開催確定・通知・施術予約は、現実の予定には反映されません。</footer>
